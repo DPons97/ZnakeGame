@@ -6,5 +6,5 @@
 AZnakeProjectGameMode::AZnakeProjectGameMode()
 {
 	// Set default pawn class to our character
-	//DefaultPawnClass = AZnakeProjectCharacter::StaticClass();	
+	// DefaultPawnClass = AZnakeProjectCharacter::StaticClass();	
 }
