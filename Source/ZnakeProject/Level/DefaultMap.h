@@ -16,27 +16,36 @@ public:
 	ADefaultMap();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
-	TSubclassOf<AActor> PointActor;
+	TSubclassOf<AActor> PointActorClass;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Score")
-	float NewPointCooldown;
+	float MinSpawnCooldown = 2.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
-	FBox MapPlayableBounds;
+	float MaxSpawnCooldown = 5.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Map")
+	FBox MapPlayableBounds = FBox(FVector(-544, -544, 64), FVector(464, 464, 64));
+
+	UPROPERTY(EditDefaultsOnly, Category = "Map")
+	float GridOffset = 16.f;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Score")
+	bool EnableSpawning = true;
 
 private:
 	float ElapsedTime;
-
+	float NewPointCooldown = 5.f;
 	FVector SpawnLocation;
+	AActor * LastPointActorSpawned = nullptr;
 	
 	bool ChooseRandomLocation(FVector& OutLocation);
 
@@ -44,6 +53,7 @@ private:
 
 	FVector ApproximateVectorComponents(FVector Vector, int Grid);
 
-	void SpawnNewPoint(FVector Location);
+	template<class T>
+	void SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector Location);
 	
 };

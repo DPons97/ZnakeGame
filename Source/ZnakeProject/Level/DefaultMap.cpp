@@ -11,14 +11,35 @@ ADefaultMap::ADefaultMap()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+}
 
+/* SpawnActorInMap: Spawns actor in map, given a specific location relative to the map.
+	* @param ToSpawn, Subclass of spawning actor
+	* @param OutActorRef, OUT new actor reference
+	* @param SpawnLocation, Spawning location
+*/
+template<class T>
+void ADefaultMap::SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector SpawnLocation)
+{
+	FTransform SpawnTransform = FTransform(FRotator(0, 0, 0), SpawnLocation, FVector(1, 1, 1));
+
+	//Set Spawn Collision Handling Override
+	FActorSpawnParameters ActorSpawnParams;
+	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	if (ToSpawn) {
+		GetWorld()->SpawnActor<T>(ToSpawn, SpawnTransform, ActorSpawnParams);
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("[%s] No PointActorClass set!"), *GetName())
+	}
 }
 
 // Called when the game starts or when spawned
 void ADefaultMap::BeginPlay()
 {
 	Super::BeginPlay();
-		
+
 }
 
 // Called every frame
@@ -29,13 +50,14 @@ void ADefaultMap::Tick(float DeltaTime)
 	ElapsedTime += DeltaTime;
 	if (ElapsedTime >= NewPointCooldown)
 	{
-		// Generate a new random point
-		ChooseRandomLocation(SpawnLocation);
-			// ... Cheking if multiple of (X=32 , Y=32)
-			// and if clear
-		
+		// Generate a new random point		
 		// If spawn point found -> Spawn a point object at the location
+		if (EnableSpawning && ChooseRandomLocation(SpawnLocation)) {
+			// UE_LOG(LogTemp, Warning, TEXT("[%s] Spawning new point"), *GetName())
+			SpawnActorInMap(PointActorClass, SpawnLocation);
+		}
 
+		NewPointCooldown = FMath::RandRange(MinSpawnCooldown, MaxSpawnCooldown);
 		ElapsedTime = 0.f;
 	}
 }
@@ -62,16 +84,18 @@ bool ADefaultMap::IsLocationColliding(FVector Location)
 {
 	FHitResult HitResult;
 	FVector GlobalLocation = ActorToWorld().TransformPosition(Location);
+	FVector BoxParams = FVector(14, 14, 1);
+
 	bool HasHit = GetWorld()->SweepSingleByChannel(
 		HitResult,
 		GlobalLocation,
 		GlobalLocation,
 		FQuat::Identity,
 		ECollisionChannel::ECC_GameTraceChannel1,
-		FCollisionShape::MakeBox(FVector(16, 16, 150))
+		FCollisionShape::MakeBox(BoxParams)
 	);
-	FColor ResultColor = HasHit ? FColor::Red : FColor::Green;
-	DrawDebugBox(GetWorld(), GlobalLocation, FVector(16, 16, 150), ResultColor, true, 100);
+	// FColor ResultColor = HasHit ? FColor::Red : FColor::Green;
+	// DrawDebugBox(GetWorld(), GlobalLocation, BoxParams, ResultColor, true, 100);
 	// UE_LOG(LogTemp, Warning, TEXT("[%s] Location is colliding: %s"), *GetName(), (HasHit ? TEXT("True") : TEXT("False")))
 	return HasHit;
 }
@@ -103,6 +127,5 @@ FVector ADefaultMap::ApproximateVectorComponents(FVector Vector, int Grid)
 		Y = Y + (Grid - DiffY);
 	}
 
-	return FVector(X, Y, Z);
+	return FVector(X+GridOffset, Y+GridOffset, Z);
 }
-
