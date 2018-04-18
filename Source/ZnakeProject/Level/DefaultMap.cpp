@@ -3,6 +3,7 @@
 #include "DefaultMap.h"
 #include "PaperTileMapComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Components/BoxComponent.h"
 
 
 // Sets default values
@@ -10,7 +11,12 @@ ADefaultMap::ADefaultMap()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	DefaultSceneComponent = CreateDefaultSubobject<USceneComponent>(FName("DefaultScene"));
+	DefaultSceneComponent->SetupAttachment(RootComponent);
 
+	PlayableBounds = CreateDefaultSubobject<UBoxComponent>(FName("PlaygroundBox"));
+	PlayableBounds->SetupAttachment(DefaultSceneComponent);
+	PlayableBounds->SetCollisionProfileName(FName("NoCollision"));
 }
 
 /* SpawnActorInMap: Spawns actor in map, given a specific location relative to the map.
@@ -65,10 +71,17 @@ void ADefaultMap::Tick(float DeltaTime)
 bool ADefaultMap::ChooseRandomLocation(FVector& OutLocation)
 {
 	const int MAX_TRIES = 60;
+	FBox SpawnableArea;
+
+	FVector BoundsLocation = PlayableBounds->GetComponentLocation();
+	FVector BoundsExtent = PlayableBounds->GetUnscaledBoxExtent();
+	FVector SpawnableAreaMin = FVector(BoundsLocation.X - BoundsExtent.X, BoundsLocation.Y - BoundsExtent.Y, BoundsLocation.Z - BoundsExtent.Z);
+	FVector SpawnableAreaMax = FVector(BoundsLocation.X + BoundsExtent.X, BoundsLocation.Y + BoundsExtent.Y, BoundsLocation.Z + BoundsExtent.Z);
+	SpawnableArea = FBox(SpawnableAreaMin, SpawnableAreaMax);
 
 	for (size_t i = 0; i < MAX_TRIES; i++)
 	{
-		FVector RandPoint = FMath::RandPointInBox(MapPlayableBounds);
+		FVector RandPoint = FMath::RandPointInBox(SpawnableArea);
 		RandPoint = ApproximateVectorComponents(RandPoint, 32);
 
 		if (!IsLocationColliding(RandPoint))
