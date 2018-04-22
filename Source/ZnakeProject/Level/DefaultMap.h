@@ -18,18 +18,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Score")
 	TSubclassOf<AActor> PointActorClass;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Score")
+	float MinSpawnCooldown = 2.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Score")
+	float MaxSpawnCooldown = 5.f;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Score")
 	USceneComponent * DefaultSceneComponent;
-
-	UPROPERTY(EditDefaultsOnly, Category="Score")
-	float MinSpawnCooldown = 2.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Score")
-	float MaxSpawnCooldown = 5.f;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Map")
 	class UBoxComponent * PlayableBounds;
