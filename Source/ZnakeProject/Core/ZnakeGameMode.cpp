@@ -4,7 +4,26 @@
 #include "Engine/World.h"
 #include "../Character/SnakeCharacter.h"
 #include "../Level/DefaultMap.h"
+#include "../Saves/LeaderboardSaves.h"
+#include "Kismet/GameplayStatics.h"
 
+
+AZnakeGameMode::AZnakeGameMode()
+{
+	
+}
+
+void AZnakeGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	LoadLeaderboard();
+
+	/*for (size_t i = 0; i < LeaderboardSave->Leaderboard.Num(); i++)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Leaderboard[%d]: %s; %d"), i, *LeaderboardSave->Leaderboard[i].PlayerName, LeaderboardSave->Leaderboard[i].Score)
+	}*/
+}
 
 void AZnakeGameMode::GenerateMap(TSubclassOf<ADefaultMap> Map)
 {
@@ -43,4 +62,36 @@ void AZnakeGameMode::UpdatePointSpawnSpeed()
 		CurrentMap->MinSpawnCooldown = FMath::Clamp(CurrentMap->MinSpawnCooldown - Decrement, 0.f, DefaultMinSpawnCooldown);
 
 	}
+}
+
+void AZnakeGameMode::SaveScoreToLeaderboard()
+{
+	if (LeaderboardSave)
+	{
+		LeaderboardSave->AddScoreToLeaderboard(PlayerName, Score);
+		LeaderboardSave->SaveLeaderboard();
+		UGameplayStatics::SaveGameToSlot(LeaderboardSave, LeaderboardSave->SaveSlotName, LeaderboardSave->UserIndex);
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error: Load/Create a savegame before saving!"))
+	}
+	
+}
+
+void AZnakeGameMode::LoadLeaderboard()
+{
+	LeaderboardSave = Cast<ULeaderboardSaves>(UGameplayStatics::CreateSaveGameObject(ULeaderboardSaves::StaticClass()));
+	LeaderboardSave = Cast<ULeaderboardSaves>(UGameplayStatics::LoadGameFromSlot(LeaderboardSave->SaveSlotName, LeaderboardSave->UserIndex));
+
+	if (!LeaderboardSave)
+	{
+		LeaderboardSave = Cast<ULeaderboardSaves>(UGameplayStatics::CreateSaveGameObject(ULeaderboardSaves::StaticClass()));
+		UGameplayStatics::SaveGameToSlot(LeaderboardSave, LeaderboardSave->SaveSlotName, LeaderboardSave->UserIndex);
+		LeaderboardSave = Cast<ULeaderboardSaves>(UGameplayStatics::LoadGameFromSlot(LeaderboardSave->SaveSlotName, LeaderboardSave->UserIndex));
+		UE_LOG(LogTemp, Warning, TEXT("No savegame found: creating new one..."))
+	}
+
+	LeaderboardSave->LoadLeaderboard();
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "../Saves/LeaderboardSaves.h"
 #include "ZnakeGameMode.generated.h"
 
 /**
@@ -15,8 +16,13 @@ class ZNAKEPROJECT_API AZnakeGameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 public:
+	AZnakeGameMode();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	int32 Score;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	FString PlayerName = FString("Player0");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	float DefaultSpeed;
@@ -30,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	class ADefaultMap * CurrentMap;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Scoreboard")
+	ULeaderboardSaves * LeaderboardSave;
+
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void GenerateMap(TSubclassOf<ADefaultMap> Map);
 
@@ -38,6 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void UpdatePointSpawnSpeed();
+
+	virtual void BeginPlay() override;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
@@ -48,6 +59,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
 	int32 StepSize = 10;
+
+	UFUNCTION(BlueprintCallable, Category = "Params")
+	void SaveScoreToLeaderboard();
+
+	UFUNCTION(BlueprintCallable, Category = "Params")
+	void LoadLeaderboard();
 
 private:
 
