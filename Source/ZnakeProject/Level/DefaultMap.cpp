@@ -82,6 +82,13 @@ bool ADefaultMap::ChooseRandomLocation(FVector& OutLocation)
 	for (size_t i = 0; i < MAX_TRIES; i++)
 	{
 		FVector RandPoint = FMath::RandPointInBox(SpawnableArea);
+		
+		RandPoint = FVector(
+			float(int(RandPoint.X)),
+			float(int(RandPoint.Y)),
+			RandPoint.Z
+		);
+
 		RandPoint = ApproximateVectorComponents(RandPoint, 32);
 
 		if (!IsLocationColliding(RandPoint))

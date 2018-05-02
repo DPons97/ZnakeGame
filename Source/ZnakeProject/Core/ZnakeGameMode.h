@@ -55,10 +55,10 @@ protected:
 	float MaxSpeed = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
-	int32 MaxSpeedPoints = 800;
+	int32 MaxSpeedPoints = 400;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
-	int32 StepSize = 10;
+	int32 StepSize = 2;
 
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void SaveScoreToLeaderboard();

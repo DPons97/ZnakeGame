@@ -18,11 +18,6 @@ void AZnakeGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	LoadLeaderboard();
-
-	/*for (size_t i = 0; i < LeaderboardSave->Leaderboard.Num(); i++)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Leaderboard[%d]: %s; %d"), i, *LeaderboardSave->Leaderboard[i].PlayerName, LeaderboardSave->Leaderboard[i].Score)
-	}*/
 }
 
 void AZnakeGameMode::GenerateMap(TSubclassOf<ADefaultMap> Map)
