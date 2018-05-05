@@ -7,6 +7,8 @@
 #include "../Saves/LeaderboardSaves.h"
 #include "ZnakeGameMode.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameModeDelegate);
+
 /**
  * 
  */
@@ -20,6 +22,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	int32 Score;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	int32 UIScore;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	FString PlayerName = FString("Player0");
@@ -38,6 +43,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Scoreboard")
 	ULeaderboardSaves * LeaderboardSave;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FGameModeDelegate OnScoreIncreased;
 
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void GenerateMap(TSubclassOf<ADefaultMap> Map);
@@ -48,17 +56,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void UpdatePointSpawnSpeed();
 
+	UFUNCTION()
+	void IncreaseScore(int32 Increment);
+
 	virtual void BeginPlay() override;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
-	float MaxSpeed = 50.f;
+	float MaxSpeed = 30.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
-	int32 MaxSpeedPoints = 400;
+	int32 MaxSpeedPoints = 1000;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
-	int32 StepSize = 2;
+	int32 StepSize = 20;
 
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void SaveScoreToLeaderboard();
@@ -67,6 +78,6 @@ protected:
 	void LoadLeaderboard();
 
 private:
-
+	
 
 };

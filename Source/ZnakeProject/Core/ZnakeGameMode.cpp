@@ -59,6 +59,12 @@ void AZnakeGameMode::UpdatePointSpawnSpeed()
 	}
 }
 
+void AZnakeGameMode::IncreaseScore(int32 Increment)
+{
+	Score += Increment;
+	OnScoreIncreased.Broadcast();
+}
+
 void AZnakeGameMode::SaveScoreToLeaderboard()
 {
 	if (LeaderboardSave)

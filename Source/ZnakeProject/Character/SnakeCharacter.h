@@ -6,6 +6,7 @@
 #include "PaperCharacter.h"
 #include "SnakeCharacter.generated.h"
 
+
 /**
  * 
  */
@@ -15,9 +16,21 @@ class ZNAKEPROJECT_API ASnakeCharacter : public APaperCharacter
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float Speed = 10.5f;
+	ASnakeCharacter();
 
-	
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float Speed = 10.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Body")
+	TSubclassOf<class ASnakeBody> SnakeBodyClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
+	TArray<ASnakeBody *> BodyReferences;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
+	ASnakeBody * NextBodyRef;
+
+	UFUNCTION(BlueprintCallable)
+	void AddBodyPart();
+
 };

@@ -14,6 +14,8 @@ ADefaultMap::ADefaultMap()
 	DefaultSceneComponent = CreateDefaultSubobject<USceneComponent>(FName("DefaultScene"));
 	DefaultSceneComponent->SetupAttachment(RootComponent);
 
+	RootComponent = DefaultSceneComponent;
+
 	PlayableBounds = CreateDefaultSubobject<UBoxComponent>(FName("PlaygroundBox"));
 	PlayableBounds->SetupAttachment(DefaultSceneComponent);
 	PlayableBounds->SetCollisionProfileName(FName("NoCollision"));
@@ -31,12 +33,14 @@ void ADefaultMap::SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector SpawnLocation)
 
 	//Set Spawn Collision Handling Override
 	FActorSpawnParameters ActorSpawnParams;
-	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	if (ToSpawn) {
+	if (ToSpawn) 
+	{
 		GetWorld()->SpawnActor<T>(ToSpawn, SpawnTransform, ActorSpawnParams);
 	}
-	else {
+	else 
+	{
 		UE_LOG(LogTemp, Error, TEXT("[%s] No PointActorClass set!"), *GetName())
 	}
 }
@@ -82,12 +86,6 @@ bool ADefaultMap::ChooseRandomLocation(FVector& OutLocation)
 	for (size_t i = 0; i < MAX_TRIES; i++)
 	{
 		FVector RandPoint = FMath::RandPointInBox(SpawnableArea);
-		
-		RandPoint = FVector(
-			float(int(RandPoint.X)),
-			float(int(RandPoint.Y)),
-			RandPoint.Z
-		);
 
 		RandPoint = ApproximateVectorComponents(RandPoint, 32);
 
@@ -125,27 +123,36 @@ FVector ADefaultMap::ApproximateVectorComponents(FVector Vector, int Grid)
 	int X = (int)Vector.X;
 	int Y = (int)Vector.Y;
 	int Z = (int)Vector.Z;
+	UE_LOG(LogTemp, Warning, TEXT("Point to approximate: %s"), *FVector(X,Y,Z).ToString())
 
-	int DiffX = X % Grid;
-	int DiffY = Y % Grid;
+	int ModX = X % Grid;
+	int ModY = Y % Grid;
+	UE_LOG(LogTemp, Warning, TEXT("Resto della divisione X = %d ; Y = %d"), ModX, ModY)
 	
-	if (DiffX <= (Grid - DiffX))
+	if (ModX <= (Grid - ModX))
 	{
-		X = X - DiffX;
+		X = X - ModX;
+		UE_LOG(LogTemp, Warning, TEXT("Resto X minore (o uguale) della metà della griglia. Nuova X = %d"), X)
 	}
 	else
 	{
-		X = X + (Grid - DiffX);
+		UE_LOG(LogTemp, Warning, TEXT("Resto X maggiore della metà della griglia. Nuova X = %d"), X)
+		X = X + (Grid - ModX);
 	}
 
-	if (DiffY <= (Grid - DiffY))
+	if (ModY <= (Grid - ModY))
 	{
-		Y = Y - DiffY;
+		Y = Y - ModY;
+		UE_LOG(LogTemp, Warning, TEXT("Resto Y minore (o uguale) della metà della griglia. Nuova Y = %d"), Y)
 	}
 	else
 	{
-		Y = Y + (Grid - DiffY);
+		Y = Y + (Grid - ModY);
+		UE_LOG(LogTemp, Warning, TEXT("Resto Y maggiore della metà della griglia. Nuova Y = %d"), Y)
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Punto approssimato: %s"), *FVector(X + GridOffset, Y + GridOffset, Z).ToString())
+	UE_LOG(LogTemp, Warning, TEXT("--------------------------------------------------------"))
 
 	return FVector(X+GridOffset, Y+GridOffset, Z);
 }
