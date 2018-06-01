@@ -24,6 +24,12 @@ public:
 	int32 Score;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	int32 PrimaryScore = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	int32 SecondaryScore = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	int32 UIScore;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
@@ -57,7 +63,7 @@ public:
 	void UpdatePointSpawnSpeed();
 
 	UFUNCTION()
-	void IncreaseScore(int32 Increment);
+	void IncreaseScore(int32 Increment, bool IsSecondary);
 
 	virtual void BeginPlay() override;
 	

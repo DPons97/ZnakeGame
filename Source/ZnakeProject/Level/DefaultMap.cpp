@@ -4,6 +4,12 @@
 #include "PaperTileMapComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "../Core/ZnakeGameMode.h"
+#include "ScoringActor.h"
+#include <iostream>
+#include <string>
+#include <random>
 
 
 // Sets default values
@@ -19,6 +25,7 @@ ADefaultMap::ADefaultMap()
 	PlayableBounds = CreateDefaultSubobject<UBoxComponent>(FName("PlaygroundBox"));
 	PlayableBounds->SetupAttachment(DefaultSceneComponent);
 	PlayableBounds->SetCollisionProfileName(FName("NoCollision"));
+
 }
 
 /* SpawnActorInMap: Spawns actor in map, given a specific location relative to the map.
@@ -27,7 +34,7 @@ ADefaultMap::ADefaultMap()
 	* @param SpawnLocation, Spawning location
 */
 template<class T>
-void ADefaultMap::SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector SpawnLocation)
+T* ADefaultMap::SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector SpawnLocation)
 {
 	FTransform SpawnTransform = FTransform(FRotator(0, 0, 0), SpawnLocation, FVector(1, 1, 1));
 
@@ -37,11 +44,13 @@ void ADefaultMap::SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector SpawnLocation)
 
 	if (ToSpawn) 
 	{
-		GetWorld()->SpawnActor<T>(ToSpawn, SpawnTransform, ActorSpawnParams);
+		T* Spawned = GetWorld()->SpawnActor<T>(ToSpawn, SpawnTransform, ActorSpawnParams);
+		return Spawned;
 	}
 	else 
 	{
 		UE_LOG(LogTemp, Error, TEXT("[%s] No PointActorClass set!"), *GetName())
+		return nullptr;
 	}
 }
 
@@ -50,24 +59,57 @@ void ADefaultMap::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (UGameplayStatics::GetGameMode(this))
+	{
+		AZnakeGameMode * GameMode = Cast<AZnakeGameMode>(UGameplayStatics::GetGameMode(this));
+		GameMode->DefaultMaxSpawnCooldown = SpawnParams[0].MaxSpawnCooldown;
+		GameMode->DefaultMinSpawnCooldown = SpawnParams[0].MinSpawnCooldown;
+	}
+
 }
 
 // Called every frame
 void ADefaultMap::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
+	SpawnPointActors(DeltaTime);	
+}
+
+void ADefaultMap::SpawnPointActors(float DeltaTime)
+{	
 	ElapsedTime += DeltaTime;
-	if (ElapsedTime >= NewPointCooldown)
+	if (ElapsedTime >= (1 / CheckSpawnSpeed))
 	{
-		// Generate a new random point		
-		// If spawn point found -> Spawn a point object at the location
-		if (EnableSpawning && ChooseRandomLocation(SpawnLocation)) {
-			// UE_LOG(LogTemp, Warning, TEXT("[%s] Spawning new point"), *GetName())
-			SpawnActorInMap(PointActorClass, SpawnLocation);
+		for (size_t i = 0; i < SpawnParams.Num(); i++)
+		{
+			SpawnParams[i].ElapsedTime += ElapsedTime;
+			//UE_LOG(LogTemp, Warning, TEXT("[%s] ElapsedTime for %s = %f"), *GetName(), *SpawnParams[i].Name, SpawnParams[i].ElapsedTime)
+
+			if (SpawnParams[i].ElapsedTime >= SpawnParams[i].NewPointCooldown)
+			{
+				// Generate a new random point		
+				// If spawn point found -> Spawn a point object at the location
+				if (SpawnParams[i].ActorsInMap < SpawnParams[i].MaxActorsInMap && ChooseRandomLocation(SpawnLocation))
+				{
+					// UE_LOG(LogTemp, Warning, TEXT("[%s] Spawning new point"), *GetName())
+					AScoringActor* SpawnedActor = SpawnActorInMap(SpawnParams[i].ActorClass, SpawnLocation);
+					SpawnedActor->ID = i;
+					SpawnParams[i].ActorsInMap++;
+				}
+
+				// Generates new spawn cooldown using Gaussian Distribution
+				float Mean = (SpawnParams[i].MinSpawnCooldown + SpawnParams[i].MaxSpawnCooldown) / 2;
+				float StdDev = FMath::Sqrt((FMath::Pow(SpawnParams[i].MinSpawnCooldown - Mean, 2) + (FMath::Pow(SpawnParams[i].MaxSpawnCooldown - Mean, 2))) / 2);
+
+				std::default_random_engine generator;
+				std::normal_distribution<double> distribution(Mean, StdDev);
+
+				SpawnParams[i].NewPointCooldown = FMath::Abs(distribution(generator));
+				SpawnParams[i].ElapsedTime = 0.f;
+			}
 		}
 
-		NewPointCooldown = FMath::RandRange(MinSpawnCooldown, MaxSpawnCooldown);
 		ElapsedTime = 0.f;
 	}
 }

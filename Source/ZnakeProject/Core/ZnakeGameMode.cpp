@@ -34,7 +34,7 @@ void AZnakeGameMode::GenerateMap(TSubclassOf<ADefaultMap> Map)
 
 void AZnakeGameMode::UpdateSnakeSpeed()
 {	
-	if (Score % StepSize == 0) {
+	if (PrimaryScore % StepSize == 0) {
 		ASnakeCharacter* PlayerPawn = Cast<ASnakeCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 
 		// Speed increment calculation:
@@ -53,16 +53,26 @@ void AZnakeGameMode::UpdatePointSpawnSpeed()
 
 		float AvgCooldown = (DefaultMinSpawnCooldown - DefaultMaxSpawnCooldown) / 2;
 		float Decrement =  AvgCooldown / (MaxSpeedPoints - StepSize);
-		CurrentMap->MaxSpawnCooldown = FMath::Clamp(CurrentMap->MaxSpawnCooldown - Decrement, 0.f, DefaultMaxSpawnCooldown);
-		CurrentMap->MinSpawnCooldown = FMath::Clamp(CurrentMap->MinSpawnCooldown - Decrement, 0.f, DefaultMinSpawnCooldown);
+		CurrentMap->SpawnParams[0].MaxSpawnCooldown = FMath::Clamp(CurrentMap->SpawnParams[0].MaxSpawnCooldown - Decrement, 0.f, DefaultMaxSpawnCooldown);
+		CurrentMap->SpawnParams[0].MinSpawnCooldown = FMath::Clamp(CurrentMap->SpawnParams[0].MinSpawnCooldown - Decrement, 0.f, DefaultMinSpawnCooldown);
 
 	}
 }
 
-void AZnakeGameMode::IncreaseScore(int32 Increment)
+void AZnakeGameMode::IncreaseScore(int32 Increment, bool IsSecondary)
 {
-	Score += Increment;
-	OnScoreIncreased.Broadcast();
+	if (IsSecondary)
+	{
+		SecondaryScore += Increment;
+		Score += Increment;
+		OnScoreIncreased.Broadcast();
+	}
+	else
+	{
+		PrimaryScore += Increment;
+		Score += Increment;
+		OnScoreIncreased.Broadcast();
+	}
 }
 
 void AZnakeGameMode::SaveScoreToLeaderboard()

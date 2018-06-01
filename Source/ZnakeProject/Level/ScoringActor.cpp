@@ -33,8 +33,6 @@ void AScoringActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Cast<AZnakeGameMode>(UGameplayStatics::GetGameMode(this))->CurrentMap->EnableSpawning = false;
-
 	HitBox->OnComponentBeginOverlap.AddDynamic(this, &AScoringActor::OnBeginOverlap);
 
 }
@@ -50,15 +48,21 @@ void AScoringActor::OnBeginOverlap(UPrimitiveComponent * OverlappedComponent, AA
 {
 	if (OtherActor->ActorHasTag(FName("Player")) && !ToBeDeleted)
 	{
-		Cast<ASnakeCharacter>(OtherActor)->AddBodyPart();
 		AZnakeGameMode * GameMode = Cast<AZnakeGameMode>(UGameplayStatics::GetGameMode(this));
+		GameMode->IncreaseScore(ScoreValue, IsSecondaryScoreType);
 
-		GameMode->IncreaseScore(ScoreValue);
-		GameMode->UpdateSnakeSpeed();
+		// Primary score increases speed
+		if (!IsSecondaryScoreType)
+		{
+			Cast<ASnakeCharacter>(OtherActor)->AddBodyPart();
+			GameMode->UpdateSnakeSpeed();
+		}
+		
+		// Both primary and secondary score increases spawn
 		GameMode->UpdatePointSpawnSpeed();
 
 		ToBeDeleted = true;
-		GameMode->CurrentMap->EnableSpawning = true;
+		GameMode->CurrentMap->SpawnParams[ID].ActorsInMap--;
 
 		Destroy();
 	}

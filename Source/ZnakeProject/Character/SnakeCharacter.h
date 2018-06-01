@@ -22,15 +22,16 @@ public:
 	float Speed = 10.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Body")
-	TSubclassOf<class ASnakeBody> SnakeBodyClass;
+	TSubclassOf<class ASnakeBody> SnakeBodyClass;	
 
+	UFUNCTION(BlueprintCallable)
+	void AddBodyPart();
+
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
 	TArray<ASnakeBody *> BodyReferences;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
 	ASnakeBody * NextBodyRef;
-
-	UFUNCTION(BlueprintCallable)
-	void AddBodyPart();
 
 };
