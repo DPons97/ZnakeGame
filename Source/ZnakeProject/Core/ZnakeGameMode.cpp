@@ -53,8 +53,8 @@ void AZnakeGameMode::UpdatePointSpawnSpeed()
 
 		float AvgCooldown = (DefaultMinSpawnCooldown - DefaultMaxSpawnCooldown) / 2;
 		float Decrement =  AvgCooldown / (MaxSpeedPoints - StepSize);
-		CurrentMap->SpawnParams[0].MaxSpawnCooldown = FMath::Clamp(CurrentMap->SpawnParams[0].MaxSpawnCooldown - Decrement, 0.f, DefaultMaxSpawnCooldown);
-		CurrentMap->SpawnParams[0].MinSpawnCooldown = FMath::Clamp(CurrentMap->SpawnParams[0].MinSpawnCooldown - Decrement, 0.f, DefaultMinSpawnCooldown);
+		CurrentMap->MaxSpawnCooldown = FMath::Clamp(CurrentMap->MaxSpawnCooldown - Decrement, 0.f, DefaultMaxSpawnCooldown);
+		CurrentMap->MinSpawnCooldown = FMath::Clamp(CurrentMap->MinSpawnCooldown - Decrement, 0.f, DefaultMinSpawnCooldown);
 
 	}
 }

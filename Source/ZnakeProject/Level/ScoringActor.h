@@ -17,7 +17,7 @@ public:
 	AScoringActor();
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Class")
-	int32 ID;
+	int32 SpawnParamID;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Defaults")
 	USceneComponent * DefaultSceneComponent;
@@ -41,6 +41,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool ToBeDeleted = false;
+
+	void DestroyActor();
 
 public:	
 	// Called every frame

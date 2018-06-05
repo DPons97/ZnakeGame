@@ -4,6 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <random>
+#include <functional>
 #include "DefaultMap.generated.h"
 
 USTRUCT(BlueprintType)
@@ -12,27 +18,25 @@ struct FSpawnParams
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	FString Name;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	TSubclassOf<class AScoringActor> ActorClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
-	float MinSpawnCooldown = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
+	int SpawningWeight = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
-	float MaxSpawnCooldown = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
+	bool PreventSpawn = true;	
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
-	int32 MaxActorsInMap = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
+	int32 ForceSpawn = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
-	float NewPointCooldown = 0;
+	int32 Spawned = 0;
 
-	int32 ActorsInMap = 0;
-
-	float ElapsedTime = 0.f;
+	UPROPERTY(EditAnywhere)
+	int32 InMap = 0;
 };
 
 
@@ -46,21 +50,47 @@ public:
 	ADefaultMap();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Score")
+	float MinSpawnCooldown = 2.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Score")
+	float MaxSpawnCooldown = 7.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Score")
+	int32 AllowCustomsAfter = 5;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score")
+	AActor * LastPointActorSpawned = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Score")
 	TArray<FSpawnParams> SpawnParams = { 
 		{
 			FString("DefaultPoint"),
 			nullptr,
-			5.f,
-			2.f,
-			1,
-			5.f,
+			30,
+			false,
+			0,
+			0,
+			0
+		},
+		{
+			FString("BoostPoint"),
+			nullptr,
+			10,
+			true,
+			0,
+			0,
 			0
 		}
 	};
+	
+	UFUNCTION(BlueprintCallable)
+	bool GetParamIndexByName(FString Name, int32 & OutIndex);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void ReloadSpawnDistributionWeights();
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Score")
 	USceneComponent * DefaultSceneComponent;
@@ -80,9 +110,19 @@ public:
 
 private:
 	float ElapsedTime = 0.f;
-	float CheckSpawnSpeed = 15.f;
+
+	float NewPointCooldown = 0.f;
+
 	FVector SpawnLocation;
-	AActor * LastPointActorSpawned = nullptr;
+
+	bool PreventAutoSpawn = false;
+
+	// *** Random generator supports ***
+	std::mt19937 RandomGenerator;
+
+	std::discrete_distribution<int> Distribution;
+
+	std::vector<int> ParamList;
 	
 	bool ChooseRandomLocation(FVector& OutLocation);
 
@@ -91,7 +131,13 @@ private:
 	template<class T>
 	T* SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector Location);
 
-	void SpawnPointActors(float DeltaTime);
+	void SpawnPointActor(float DeltaTime);
 
-	
+	void SpawnPointActorInMap(int SpawnIndex);
+
+	bool IsMapEmpty();
+
+	void UpdateForcePreventParams();
+
+	int32 GetForcingSpawn(int32 & OutNumberToSpawn);
 };

@@ -9,7 +9,10 @@
 #include "ScoringActor.h"
 #include <iostream>
 #include <string>
+#include <vector>
+#include <map>
 #include <random>
+#include <functional>
 
 
 // Sets default values
@@ -30,7 +33,6 @@ ADefaultMap::ADefaultMap()
 
 /* SpawnActorInMap: Spawns actor in map, given a specific location relative to the map.
 	* @param ToSpawn, Subclass of spawning actor
-	* @param OutActorRef, OUT new actor reference
 	* @param SpawnLocation, Spawning location
 */
 template<class T>
@@ -54,17 +56,80 @@ T* ADefaultMap::SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector SpawnLocation)
 	}
 }
 
+// Reload distribution weights if changed
+void ADefaultMap::ReloadSpawnDistributionWeights()
+{
+	for (size_t i = 0; i < SpawnParams.Num(); i++)
+	{
+		ParamList.push_back(SpawnParams[i].SpawningWeight);
+	}
+}
+
+/* GetParamIndexByName: Check if spawn parameter with a given name exists in the map's database
+	* @param Name, Name of the parameter to search
+	* @param OutIndex, reference to index, if found
+	* @returns bool if parameter is found
+*/
+bool ADefaultMap::GetParamIndexByName(FString Name, int32 & OutIndex)
+{
+	for (size_t i = 0; i < SpawnParams.Num(); i++)
+	{
+		if (SpawnParams[i].Name == Name)
+		{
+			OutIndex = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+// Returns true if map has no points
+bool ADefaultMap::IsMapEmpty()
+{
+	for (size_t i = 0; i < SpawnParams.Num(); i++)
+	{
+		if (SpawnParams[i].InMap > 0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+// Returns index of actor forcing his spawn and the number of actors to spawn
+int32 ADefaultMap::GetForcingSpawn(int32 & OutNumberToSpawn)
+{
+	for (size_t i = 0; i < SpawnParams.Num(); i++)
+	{
+		if (SpawnParams[i].ForceSpawn > 0)
+		{
+			OutNumberToSpawn = SpawnParams[i].ForceSpawn;
+			return i;
+		}
+	}
+	OutNumberToSpawn = 0;
+	return -1;
+}
+
 // Called when the game starts or when spawned
 void ADefaultMap::BeginPlay()
 {
-	Super::BeginPlay();
+	Super::BeginPlay();	
 
 	if (UGameplayStatics::GetGameMode(this))
 	{
 		AZnakeGameMode * GameMode = Cast<AZnakeGameMode>(UGameplayStatics::GetGameMode(this));
-		GameMode->DefaultMaxSpawnCooldown = SpawnParams[0].MaxSpawnCooldown;
-		GameMode->DefaultMinSpawnCooldown = SpawnParams[0].MinSpawnCooldown;
+		GameMode->DefaultMaxSpawnCooldown = MaxSpawnCooldown;
+		GameMode->DefaultMinSpawnCooldown = MinSpawnCooldown;
 	}
+
+	NewPointCooldown = FMath::RandRange(MinSpawnCooldown, MaxSpawnCooldown);
+	ReloadSpawnDistributionWeights();
+
+	// Generate a new random point following custom distribution
+	Distribution = std::discrete_distribution<int>(ParamList.begin(), ParamList.end());
+	RandomGenerator = std::mt19937(std::random_device{}());
 
 }
 
@@ -73,44 +138,62 @@ void ADefaultMap::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	SpawnPointActors(DeltaTime);	
+	SpawnPointActor(DeltaTime);	
 }
 
-void ADefaultMap::SpawnPointActors(float DeltaTime)
+void ADefaultMap::SpawnPointActor(float DeltaTime)
 {	
 	ElapsedTime += DeltaTime;
-	if (ElapsedTime >= (1 / CheckSpawnSpeed))
+
+	UpdateForcePreventParams();
+
+	// Check if points are present in map
+	PreventAutoSpawn = !IsMapEmpty();
+
+	if (ElapsedTime >= NewPointCooldown)
 	{
-		for (size_t i = 0; i < SpawnParams.Num(); i++)
+		if (!PreventAutoSpawn) 
 		{
-			SpawnParams[i].ElapsedTime += ElapsedTime;
-			//UE_LOG(LogTemp, Warning, TEXT("[%s] ElapsedTime for %s = %f"), *GetName(), *SpawnParams[i].Name, SpawnParams[i].ElapsedTime)
-
-			if (SpawnParams[i].ElapsedTime >= SpawnParams[i].NewPointCooldown)
+			int32 ForcedToSpawn;
+			int32 ForcingIndex = GetForcingSpawn(ForcedToSpawn);
+			if (ForcingIndex != -1)
 			{
-				// Generate a new random point		
-				// If spawn point found -> Spawn a point object at the location
-				if (SpawnParams[i].ActorsInMap < SpawnParams[i].MaxActorsInMap && ChooseRandomLocation(SpawnLocation))
-				{
-					// UE_LOG(LogTemp, Warning, TEXT("[%s] Spawning new point"), *GetName())
-					AScoringActor* SpawnedActor = SpawnActorInMap(SpawnParams[i].ActorClass, SpawnLocation);
-					SpawnedActor->ID = i;
-					SpawnParams[i].ActorsInMap++;
-				}
-
-				// Generates new spawn cooldown using Gaussian Distribution
-				float Mean = (SpawnParams[i].MinSpawnCooldown + SpawnParams[i].MaxSpawnCooldown) / 2;
-				float StdDev = FMath::Sqrt((FMath::Pow(SpawnParams[i].MinSpawnCooldown - Mean, 2) + (FMath::Pow(SpawnParams[i].MaxSpawnCooldown - Mean, 2))) / 2);
-
-				std::default_random_engine generator;
-				std::normal_distribution<double> distribution(Mean, StdDev);
-
-				SpawnParams[i].NewPointCooldown = FMath::Abs(distribution(generator));
-				SpawnParams[i].ElapsedTime = 0.f;
+				SpawnPointActorInMap(ForcingIndex);
+				SpawnParams[ForcingIndex].ForceSpawn--;
 			}
+			else
+			{
+				int SpawnIndex = Distribution(RandomGenerator);
+
+				//UE_LOG(LogTemp, Warning, TEXT("[%s] Spawning: %s"), *GetName(), *SpawnParams[SpawnIndex].Name);
+
+				if (!SpawnParams[SpawnIndex].PreventSpawn && ChooseRandomLocation(SpawnLocation))
+				{
+					SpawnPointActorInMap(SpawnIndex);
+				}
+				else if (SpawnParams[SpawnIndex].PreventSpawn && ChooseRandomLocation(SpawnLocation))
+				{
+					SpawnPointActorInMap(0);
+				}
+			}			
 		}
 
+		NewPointCooldown = FMath::RandRange(MinSpawnCooldown, MaxSpawnCooldown);
 		ElapsedTime = 0.f;
+	}
+}
+
+void ADefaultMap::SpawnPointActorInMap(int SpawnIndex)
+{
+	// If spawn point found -> Spawn a point object at the location
+	AScoringActor* SpawnedActor = SpawnActorInMap(SpawnParams[SpawnIndex].ActorClass, SpawnLocation);
+	if (SpawnedActor)
+	{
+		LastPointActorSpawned = SpawnedActor;
+		SpawnedActor->SpawnParamID = SpawnIndex;
+		SpawnParams[SpawnIndex].InMap++;
+		SpawnParams[SpawnIndex].Spawned++;
+		PreventAutoSpawn = true;
 	}
 }
 
@@ -165,36 +248,46 @@ FVector ADefaultMap::ApproximateVectorComponents(FVector Vector, int Grid)
 	int X = (int)Vector.X;
 	int Y = (int)Vector.Y;
 	int Z = (int)Vector.Z;
-	UE_LOG(LogTemp, Warning, TEXT("Point to approximate: %s"), *FVector(X,Y,Z).ToString())
 
 	int ModX = X % Grid;
 	int ModY = Y % Grid;
-	UE_LOG(LogTemp, Warning, TEXT("Resto della divisione X = %d ; Y = %d"), ModX, ModY)
 	
 	if (ModX <= (Grid - ModX))
 	{
 		X = X - ModX;
-		UE_LOG(LogTemp, Warning, TEXT("Resto X minore (o uguale) della metà della griglia. Nuova X = %d"), X)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Resto X maggiore della metà della griglia. Nuova X = %d"), X)
 		X = X + (Grid - ModX);
 	}
 
 	if (ModY <= (Grid - ModY))
 	{
 		Y = Y - ModY;
-		UE_LOG(LogTemp, Warning, TEXT("Resto Y minore (o uguale) della metà della griglia. Nuova Y = %d"), Y)
 	}
 	else
 	{
 		Y = Y + (Grid - ModY);
-		UE_LOG(LogTemp, Warning, TEXT("Resto Y maggiore della metà della griglia. Nuova Y = %d"), Y)
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Punto approssimato: %s"), *FVector(X + GridOffset, Y + GridOffset, Z).ToString())
-	UE_LOG(LogTemp, Warning, TEXT("--------------------------------------------------------"))
-
 	return FVector(X+GridOffset, Y+GridOffset, Z);
+}
+
+// This function contains all additional spawn conditions to let specific scoring actors to spawn
+void ADefaultMap::UpdateForcePreventParams()
+{
+	// Every additional scoring actors can spawn only AFTER 'AllowCustomsAfter' default points
+	if (SpawnParams[0].Spawned >= AllowCustomsAfter)
+	{
+		int32 ToUpdateIndex;
+
+		// Boost Score
+		if (GetParamIndexByName(FString("BoostPoint"), ToUpdateIndex) && SpawnParams[ToUpdateIndex].PreventSpawn)
+		{
+			SpawnParams[ToUpdateIndex].ForceSpawn = 1;
+			SpawnParams[ToUpdateIndex].PreventSpawn = false;
+		} 
+	}
+
+	return;
 }

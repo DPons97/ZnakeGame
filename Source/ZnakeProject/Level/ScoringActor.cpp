@@ -57,15 +57,19 @@ void AScoringActor::OnBeginOverlap(UPrimitiveComponent * OverlappedComponent, AA
 			Cast<ASnakeCharacter>(OtherActor)->AddBodyPart();
 			GameMode->UpdateSnakeSpeed();
 		}
-		
 		// Both primary and secondary score increases spawn
 		GameMode->UpdatePointSpawnSpeed();
-
-		ToBeDeleted = true;
-		GameMode->CurrentMap->SpawnParams[ID].ActorsInMap--;
-
-		Destroy();
+		
+		DestroyActor();
 	}
-
 }
 
+void AScoringActor::DestroyActor()
+{
+	AZnakeGameMode * GameMode = Cast<AZnakeGameMode>(UGameplayStatics::GetGameMode(this));
+
+	ToBeDeleted = true;
+	GameMode->CurrentMap->SpawnParams[SpawnParamID].InMap--;
+
+	Destroy();
+}
