@@ -154,12 +154,16 @@ void ADefaultMap::SpawnPointActor(float DeltaTime)
 	{
 		if (!PreventAutoSpawn) 
 		{
+			FVector SpawnLocation;
 			int32 ForcedToSpawn;
 			int32 ForcingIndex = GetForcingSpawn(ForcedToSpawn);
 			if (ForcingIndex != -1)
 			{
-				SpawnPointActorInMap(ForcingIndex);
-				SpawnParams[ForcingIndex].ForceSpawn--;
+				if (!SpawnParams[ForcingIndex].PreventSpawn && ChooseRandomLocation(SpawnLocation))
+				{
+					SpawnPointActorByIndex(ForcingIndex, SpawnLocation);
+					SpawnParams[ForcingIndex].ForceSpawn--;
+				}
 			}
 			else
 			{
@@ -169,11 +173,11 @@ void ADefaultMap::SpawnPointActor(float DeltaTime)
 
 				if (!SpawnParams[SpawnIndex].PreventSpawn && ChooseRandomLocation(SpawnLocation))
 				{
-					SpawnPointActorInMap(SpawnIndex);
+					SpawnPointActorByIndex(SpawnIndex, SpawnLocation);
 				}
 				else if (SpawnParams[SpawnIndex].PreventSpawn && ChooseRandomLocation(SpawnLocation))
 				{
-					SpawnPointActorInMap(0);
+					SpawnPointActorByIndex(0, SpawnLocation);
 				}
 			}			
 		}
@@ -183,7 +187,7 @@ void ADefaultMap::SpawnPointActor(float DeltaTime)
 	}
 }
 
-void ADefaultMap::SpawnPointActorInMap(int SpawnIndex)
+void ADefaultMap::SpawnPointActorByIndex(int SpawnIndex, FVector SpawnLocation)
 {
 	// If spawn point found -> Spawn a point object at the location
 	AScoringActor* SpawnedActor = SpawnActorInMap(SpawnParams[SpawnIndex].ActorClass, SpawnLocation);
@@ -287,6 +291,20 @@ void ADefaultMap::UpdateForcePreventParams()
 			SpawnParams[ToUpdateIndex].ForceSpawn = 1;
 			SpawnParams[ToUpdateIndex].PreventSpawn = false;
 		} 
+
+		// Speed Boost
+		if (GetParamIndexByName(FString("SpeedBoostPoint"), ToUpdateIndex) && SpawnParams[ToUpdateIndex].PreventSpawn)
+		{
+			SpawnParams[ToUpdateIndex].PreventSpawn = false;
+		}
+
+		// Point rain
+		if (GetParamIndexByName(FString("PointRain"), ToUpdateIndex) && SpawnParams[ToUpdateIndex].PreventSpawn)
+		{
+			SpawnParams[ToUpdateIndex].PreventSpawn = false;
+		}
+
+
 	}
 
 	return;

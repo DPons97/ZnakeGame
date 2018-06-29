@@ -18,18 +18,23 @@ struct FSpawnParams
 	GENERATED_BODY()
 
 public:
+	// Name of the score param
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	FString Name;
 
+	// Class
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	TSubclassOf<class AScoringActor> ActorClass;
 
+	// Spawning Weight
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	int SpawningWeight = 0;
 
+	// Prevent spawn
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	bool PreventSpawn = true;	
 
+	// Force Spawn
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
 	int32 ForceSpawn = 0;
 
@@ -80,11 +85,35 @@ public:
 			0,
 			0,
 			0
+		},
+		{
+			FString("SpeedBoostPoint"),
+			nullptr,
+			5,
+			true,
+			0,
+			0,
+			0
+		},
+		{
+			FString("PointRain"),
+			nullptr,
+			5,
+			true,
+			0,
+			0,
+			0
 		}
 	};
 	
 	UFUNCTION(BlueprintCallable)
 	bool GetParamIndexByName(FString Name, int32 & OutIndex);
+
+	UFUNCTION(BlueprintCallable)
+	void SpawnPointActorByIndex(int SpawnIndex, FVector SpawnLocation);
+
+	UFUNCTION(BlueprintCallable)
+	bool ChooseRandomLocation(FVector& OutLocation);
 
 protected:
 	// Called when the game starts or when spawned
@@ -113,8 +142,6 @@ private:
 
 	float NewPointCooldown = 0.f;
 
-	FVector SpawnLocation;
-
 	bool PreventAutoSpawn = false;
 
 	// *** Random generator supports ***
@@ -123,8 +150,6 @@ private:
 	std::discrete_distribution<int> Distribution;
 
 	std::vector<int> ParamList;
-	
-	bool ChooseRandomLocation(FVector& OutLocation);
 
 	bool IsLocationColliding(FVector Location);
 
@@ -132,8 +157,6 @@ private:
 	T* SpawnActorInMap(TSubclassOf<T> ToSpawn, FVector Location);
 
 	void SpawnPointActor(float DeltaTime);
-
-	void SpawnPointActorInMap(int SpawnIndex);
 
 	bool IsMapEmpty();
 

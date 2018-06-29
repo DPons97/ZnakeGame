@@ -65,6 +65,8 @@ public:
 	UFUNCTION()
 	void IncreaseScore(int32 Increment, bool IsSecondary);
 
+	void AddToPool(class AScoringActor* ScoringActor);
+
 	virtual void BeginPlay() override;
 	
 protected:
@@ -77,6 +79,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
 	int32 StepSize = 20;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pool")
+	class UActorPool* DeletedScoringActorPool;
+
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void SaveScoreToLeaderboard();
 
@@ -84,6 +89,7 @@ protected:
 	void LoadLeaderboard();
 
 private:
-	
+	void UpdateDeletedPool();
+
 
 };

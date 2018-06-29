@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "ScoringActor.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FScoringActorDelegate);
 
 UCLASS()
 class ZNAKEPROJECT_API AScoringActor : public AActor
@@ -24,6 +25,9 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Collisions")
 	class UBoxComponent * HitBox;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FScoringActorDelegate OnScoreTaken;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	int32 ScoreValue = 10;

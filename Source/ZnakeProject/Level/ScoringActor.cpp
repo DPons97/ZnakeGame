@@ -71,5 +71,9 @@ void AScoringActor::DestroyActor()
 	ToBeDeleted = true;
 	GameMode->CurrentMap->SpawnParams[SpawnParamID].InMap--;
 
-	Destroy();
+	OnScoreTaken.Broadcast();
+
+	SetActorHiddenInGame(true);
+
+	GameMode->AddToPool(this);
 }

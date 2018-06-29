@@ -21,6 +21,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float Speed = 10.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float Acceleration = 0.f;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Body")
 	TSubclassOf<class ASnakeBody> SnakeBodyClass;	
 

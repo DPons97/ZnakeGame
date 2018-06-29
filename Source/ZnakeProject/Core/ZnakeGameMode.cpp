@@ -6,11 +6,14 @@
 #include "../Level/DefaultMap.h"
 #include "../Saves/LeaderboardSaves.h"
 #include "Kismet/GameplayStatics.h"
+#include "Optimization/ActorPool.h"
+#include "Level/ScoringActor.h"
+#include "EngineUtils.h"
 
 
 AZnakeGameMode::AZnakeGameMode()
 {
-	
+	DeletedScoringActorPool = CreateDefaultSubobject<UActorPool>(TEXT("Pool"));
 }
 
 void AZnakeGameMode::BeginPlay()
@@ -105,4 +108,27 @@ void AZnakeGameMode::LoadLeaderboard()
 	}
 
 	LeaderboardSave->LoadLeaderboard();
+}
+
+void AZnakeGameMode::AddToPool(AScoringActor * ScoringActor)
+{
+	DeletedScoringActorPool->Add(ScoringActor);
+	UpdateDeletedPool();
+}
+
+void AZnakeGameMode::UpdateDeletedPool()
+{
+	int NumberOfActors = 0;
+	auto ScoreIterator = TActorIterator<AScoringActor>(GetWorld());
+	while (ScoreIterator)
+	{
+		NumberOfActors++;
+		++ScoreIterator;
+	}
+
+	if (NumberOfActors >= DeletedScoringActorPool->MaxActorsInPool)
+	{
+		auto DeletingActor = DeletedScoringActorPool->Checkout();
+		DeletingActor->Destroy();
+	}
 }
