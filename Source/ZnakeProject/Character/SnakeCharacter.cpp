@@ -21,3 +21,17 @@ void ASnakeCharacter::AddBodyPart()
 	}
 
 }
+
+void ASnakeCharacter::MoveToTile(FTransform NextTransform)
+{
+	LastTransform = GetActorTransform();
+
+	FHitResult HitResult;
+	SetActorTransform(NextTransform, false, &HitResult, ETeleportType::TeleportPhysics);
+
+	if (NextBodyRef)
+	{
+		NextBodyRef->MoveToNextTile(LastTransform);
+	}
+
+}

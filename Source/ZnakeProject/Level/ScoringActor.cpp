@@ -24,7 +24,6 @@ AScoringActor::AScoringActor()
 	HitBox->SetCollisionProfileName(FName("Trigger"));
 	HitBox->SetRelativeLocation(FVector(0, 0, 50));
 	HitBox->SetBoxExtent(FVector(10, 10, 50));
-	// Generates Hit Event?
 
 }
 

@@ -103,6 +103,15 @@ public:
 			0,
 			0,
 			0
+		},
+		{
+			FString("DecelerationAbility"),
+			nullptr,
+			10,
+			true,
+			0,
+			0,
+			0
 		}
 	};
 	
@@ -124,11 +133,9 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Score")
 	USceneComponent * DefaultSceneComponent;
 
+	// Box component that set the area where map can spawn point actors
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Map")
-	class UBoxComponent * PlayableBounds;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Map")
-	float GridOffset = 16.f;
+	class UBoxComponent * SpawnBounds;
 
 public:	
 	// Called every frame

@@ -23,29 +23,34 @@ void AZnakeGameMode::BeginPlay()
 	LoadLeaderboard();
 }
 
-void AZnakeGameMode::GenerateMap(TSubclassOf<ADefaultMap> Map)
+ADefaultMap * AZnakeGameMode::GenerateMap(TSubclassOf<ADefaultMap> Map)
 {
-	FTransform SpawnTransform = FTransform(FRotator::ZeroRotator, FVector(16, 16, 0), FVector(1, 1, 1));
+	FTransform SpawnTransform = FTransform(FRotator::ZeroRotator, FVector(0, 0, 0), FVector(1, 1, 1));
 
 	FActorSpawnParameters ActorSpawnParams;
 	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	if (Map) {
 		CurrentMap = GetWorld()->SpawnActor<ADefaultMap>(Map, SpawnTransform, ActorSpawnParams);
-	}	
+		return CurrentMap;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Map class set!"))
+		return nullptr;
+	}
 }
 
 void AZnakeGameMode::UpdateSnakeSpeed()
 {	
 	if (PrimaryScore % StepSize == 0) {
 		ASnakeCharacter* PlayerPawn = Cast<ASnakeCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-
+		
 		// Speed increment calculation:
-		// Difference between default speed (at Score = 0) and max speed to reach (at MaxSpeedPoints score)
-		float SpeedIncrement = (MaxSpeed - DefaultSpeed) / ((MaxSpeedPoints - StepSize) / StepSize);
+		SpeedIncrement = ((MaxSpeed - StartingSpeed) * StepSize) / MaxSpeedPoints;
 
 		// Applying the increment and updating to character
-		PlayerPawn->Speed = FMath::Clamp(SpeedIncrement + PlayerPawn->Speed, DefaultSpeed, MaxSpeed);
+		PlayerPawn->Speed = FMath::Clamp(SpeedIncrement + PlayerPawn->Speed, MinSpeed, MaxSpeed);
 	}
 }
 
@@ -131,4 +136,19 @@ void AZnakeGameMode::UpdateDeletedPool()
 		auto DeletingActor = DeletedScoringActorPool->Checkout();
 		DeletingActor->Destroy();
 	}
+}
+
+int32 AZnakeGameMode::GetMaxSpeedPoints() const
+{
+	return MaxSpeedPoints;
+}
+
+float AZnakeGameMode::GetMaxSpeed() const
+{
+	return MaxSpeed;
+}
+
+int32 AZnakeGameMode::GetStepSize() const
+{
+	return StepSize;
 }

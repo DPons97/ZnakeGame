@@ -5,7 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "../Core/ZnakeGameMode.h"
+#include "Core/ZnakeGameMode.h"
 #include "ScoringActor.h"
 #include <iostream>
 #include <string>
@@ -25,10 +25,9 @@ ADefaultMap::ADefaultMap()
 
 	RootComponent = DefaultSceneComponent;
 
-	PlayableBounds = CreateDefaultSubobject<UBoxComponent>(FName("PlaygroundBox"));
-	PlayableBounds->SetupAttachment(DefaultSceneComponent);
-	PlayableBounds->SetCollisionProfileName(FName("NoCollision"));
-
+	SpawnBounds = CreateDefaultSubobject<UBoxComponent>(FName("SpawnBox"));
+	SpawnBounds->SetupAttachment(DefaultSceneComponent);
+	SpawnBounds->SetCollisionProfileName(FName("NoCollision"));
 }
 
 /* SpawnActorInMap: Spawns actor in map, given a specific location relative to the map.
@@ -145,13 +144,13 @@ void ADefaultMap::SpawnPointActor(float DeltaTime)
 {	
 	ElapsedTime += DeltaTime;
 
-	UpdateForcePreventParams();
-
 	// Check if points are present in map
 	PreventAutoSpawn = !IsMapEmpty();
 
 	if (ElapsedTime >= NewPointCooldown)
 	{
+		UpdateForcePreventParams();
+
 		if (!PreventAutoSpawn) 
 		{
 			FVector SpawnLocation;
@@ -206,8 +205,8 @@ bool ADefaultMap::ChooseRandomLocation(FVector& OutLocation)
 	const int MAX_TRIES = 60;
 	FBox SpawnableArea;
 
-	FVector BoundsLocation = PlayableBounds->GetComponentLocation();
-	FVector BoundsExtent = PlayableBounds->GetUnscaledBoxExtent();
+	FVector BoundsLocation = SpawnBounds->GetComponentLocation();
+	FVector BoundsExtent = SpawnBounds->GetUnscaledBoxExtent();
 	FVector SpawnableAreaMin = FVector(BoundsLocation.X - BoundsExtent.X, BoundsLocation.Y - BoundsExtent.Y, BoundsLocation.Z - BoundsExtent.Z);
 	FVector SpawnableAreaMax = FVector(BoundsLocation.X + BoundsExtent.X, BoundsLocation.Y + BoundsExtent.Y, BoundsLocation.Z + BoundsExtent.Z);
 	SpawnableArea = FBox(SpawnableAreaMin, SpawnableAreaMax);
@@ -274,7 +273,7 @@ FVector ADefaultMap::ApproximateVectorComponents(FVector Vector, int Grid)
 		Y = Y + (Grid - ModY);
 	}
 
-	return FVector(X+GridOffset, Y+GridOffset, Z);
+	return FVector(X, Y, Z);
 }
 
 // This function contains all additional spawn conditions to let specific scoring actors to spawn
@@ -304,7 +303,22 @@ void ADefaultMap::UpdateForcePreventParams()
 			SpawnParams[ToUpdateIndex].PreventSpawn = false;
 		}
 
+		// Deceleration ability
+		if (GetParamIndexByName(FString("DecelerationAbility"), ToUpdateIndex) && SpawnParams[ToUpdateIndex].PreventSpawn)
+		{
+			// Calculate how many base points the player has to take in order to activate spawn of this point type
+			AZnakeGameMode * GameMode = Cast<AZnakeGameMode>(UGameplayStatics::GetGameMode(this));
+			float SpeedThreshold = 12.f;
+			int32 PointThresold = AllowCustomsAfter + ( (SpeedThreshold - GameMode->StartingSpeed) / GameMode->SpeedIncrement );
 
+			// If player took enough primary points to have [SpeedThresold] speed
+			if ( SpawnParams[0].Spawned >= PointThresold )
+			{
+				// Enable spawning
+				SpawnParams[ToUpdateIndex].ForceSpawn = 1;
+				SpawnParams[ToUpdateIndex].PreventSpawn = false;
+			}
+		}
 	}
 
 	return;

@@ -36,7 +36,7 @@ public:
 	FString PlayerName = FString("Player0");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
-	float DefaultSpeed;
+	float StartingSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	float DefaultMinSpawnCooldown;
@@ -53,8 +53,11 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Delegates")
 	FGameModeDelegate OnScoreIncreased;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Params")
+	float SpeedIncrement;
+
 	UFUNCTION(BlueprintCallable, Category = "Params")
-	void GenerateMap(TSubclassOf<ADefaultMap> Map);
+	ADefaultMap * GenerateMap(TSubclassOf<ADefaultMap> Map);
 
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void UpdateSnakeSpeed();
@@ -67,6 +70,12 @@ public:
 
 	void AddToPool(class AScoringActor* ScoringActor);
 
+	int32 GetMaxSpeedPoints() const;
+
+	float GetMaxSpeed() const;
+
+	int32 GetStepSize() const;
+
 	virtual void BeginPlay() override;
 	
 protected:
@@ -74,7 +83,10 @@ protected:
 	float MaxSpeed = 30.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
-	int32 MaxSpeedPoints = 1000;
+	float MinSpeed = 8.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
+	int32 MaxSpeedPoints = 700;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
 	int32 StepSize = 20;
