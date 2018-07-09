@@ -7,13 +7,14 @@
 #include "../Saves/LeaderboardSaves.h"
 #include "Kismet/GameplayStatics.h"
 #include "Optimization/ActorPool.h"
-#include "Level/ScoringActor.h"
+#include "Level/PickableActor.h"
+#include "Level/AbilityActor.h"
 #include "EngineUtils.h"
 
 
 AZnakeGameMode::AZnakeGameMode()
 {
-	DeletedScoringActorPool = CreateDefaultSubobject<UActorPool>(TEXT("Pool"));
+	DeletedPickableActorPool = CreateDefaultSubobject<UActorPool>(TEXT("Pool"));
 }
 
 void AZnakeGameMode::BeginPlay()
@@ -115,25 +116,47 @@ void AZnakeGameMode::LoadLeaderboard()
 	LeaderboardSave->LoadLeaderboard();
 }
 
-void AZnakeGameMode::AddToPool(AScoringActor * ScoringActor)
+void AZnakeGameMode::AddToPool(APickableActor * Actor)
 {
-	DeletedScoringActorPool->Add(ScoringActor);
+	DeletedPickableActorPool->Add(Actor);
 	UpdateDeletedPool();
+}
+
+void AZnakeGameMode::EnqueueAbilityToPool(AAbilityActor * Ability)
+{
+	if (AbilityPool.Num() < MaxAbilityStack)
+	{
+		int32 index = AbilityPool.Add(Ability);
+		CurrentMap->EnqueueAbilitySprite(Ability, index);
+	}
+	else
+	{
+		Ability->DestroyActor();
+	}
+}
+
+void AZnakeGameMode::DequeueAbilityFromPool()
+{
+	if (AbilityPool[0])
+	{
+		AbilityPool.Pop();
+		CurrentMap->DequeueAbilitySprite();
+	}
 }
 
 void AZnakeGameMode::UpdateDeletedPool()
 {
 	int NumberOfActors = 0;
-	auto ScoreIterator = TActorIterator<AScoringActor>(GetWorld());
+	auto ScoreIterator = TActorIterator<APickableActor>(GetWorld());
 	while (ScoreIterator)
 	{
 		NumberOfActors++;
 		++ScoreIterator;
 	}
 
-	if (NumberOfActors >= DeletedScoringActorPool->MaxActorsInPool)
+	if (NumberOfActors >= DeletedPickableActorPool->MaxActorsInPool)
 	{
-		auto DeletingActor = DeletedScoringActorPool->Checkout();
+		auto DeletingActor = DeletedPickableActorPool->Checkout();
 		DeletingActor->Destroy();
 	}
 }

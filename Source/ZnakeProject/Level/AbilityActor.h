@@ -5,44 +5,48 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Level/PickableActor.h"
-#include "ScoringActor.generated.h"
+#include "AbilityActor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FScoringActorDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAbilityActorDelegate);
+
 
 UCLASS()
-class ZNAKEPROJECT_API AScoringActor : public APickableActor
+class ZNAKEPROJECT_API AAbilityActor : public APickableActor
 {
 	GENERATED_BODY()
 	
-public:	
-	// Sets default values for this actor's properties
-	AScoringActor();
+public:
+	AAbilityActor();
 
 	UPROPERTY(BlueprintAssignable, Category = "Delegates")
-	FScoringActorDelegate OnScoreTaken;
+	FAbilityActorDelegate OnAbilityTaken;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	int32 ScoreValue = 10;
+	UPROPERTY(BlueprintAssignable, Category = "Delegates")
+	FAbilityActorDelegate OnAbilityActivated;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	bool IsSecondaryScoreType = false;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	class UPaperSprite * Icon;
 
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
 
+	UFUNCTION()
+	void DestroyActor();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateAbility();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void DestroyActor();
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	
+
 
 
 };

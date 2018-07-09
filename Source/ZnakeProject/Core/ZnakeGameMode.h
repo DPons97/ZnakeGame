@@ -68,7 +68,11 @@ public:
 	UFUNCTION()
 	void IncreaseScore(int32 Increment, bool IsSecondary);
 
-	void AddToPool(class AScoringActor* ScoringActor);
+	void AddToPool(class APickableActor* Actor);
+
+	void EnqueueAbilityToPool(class AAbilityActor * Ability);
+
+	void DequeueAbilityFromPool();
 
 	int32 GetMaxSpeedPoints() const;
 
@@ -91,8 +95,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
 	int32 StepSize = 20;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Params")
+	int32 MaxAbilityStack = 5;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pool")
-	class UActorPool* DeletedScoringActorPool;
+	class UActorPool* DeletedPickableActorPool;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pool")
+	TArray<AAbilityActor*> AbilityPool;
 
 	UFUNCTION(BlueprintCallable, Category = "Params")
 	void SaveScoreToLeaderboard();

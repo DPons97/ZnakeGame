@@ -24,7 +24,7 @@ public:
 
 	// Class
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
-	TSubclassOf<class AScoringActor> ActorClass;
+	TSubclassOf<class APickableActor> ActorClass;
 
 	// Spawning Weight
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score Parameters")
@@ -124,6 +124,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool ChooseRandomLocation(FVector& OutLocation);
 
+	UFUNCTION(BlueprintCallable)
+	void EnqueueAbilitySprite(class AAbilityActor * Ability, int32 index);
+
+	UFUNCTION(BlueprintCallable)
+	void DequeueAbilitySprite();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -136,6 +142,9 @@ protected:
 	// Box component that set the area where map can spawn point actors
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Map")
 	class UBoxComponent * SpawnBounds;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Abilities")
+	TArray<class UPaperSpriteComponent *> AbilitySprites;
 
 public:	
 	// Called every frame

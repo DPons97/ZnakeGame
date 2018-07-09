@@ -24,14 +24,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float Acceleration = 0.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	int32 DecelerationPoints = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float AbilityDeltaSpeed = -15.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float AbilityDuration = 5.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float AbilityCooldown = 2.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	FTransform LastTransform;

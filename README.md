@@ -18,3 +18,5 @@
 * Z11: Added BoostPoints, spawn cooldown generation now follows a Gaussian distribution
 * Z12: Complete refactor of random point spawn that now follows custom discrete distribution.
 * Z13: Added SpeedBoost and PointRain point type 
+* Z14: Added deceleration ability, and improved textures. Pseudo-Infinite terrain and UI reworked. Added PointRain.
+* Z15: Ability / Perks system reworked. 

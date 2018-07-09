@@ -6,7 +6,9 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/ZnakeGameMode.h"
-#include "ScoringActor.h"
+#include "Level/PickableActor.h"
+#include "Level/AbilityActor.h"
+#include "PaperSpriteComponent.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -129,7 +131,6 @@ void ADefaultMap::BeginPlay()
 	// Generate a new random point following custom distribution
 	Distribution = std::discrete_distribution<int>(ParamList.begin(), ParamList.end());
 	RandomGenerator = std::mt19937(std::random_device{}());
-
 }
 
 // Called every frame
@@ -189,7 +190,7 @@ void ADefaultMap::SpawnPointActor(float DeltaTime)
 void ADefaultMap::SpawnPointActorByIndex(int SpawnIndex, FVector SpawnLocation)
 {
 	// If spawn point found -> Spawn a point object at the location
-	AScoringActor* SpawnedActor = SpawnActorInMap(SpawnParams[SpawnIndex].ActorClass, SpawnLocation);
+	APickableActor* SpawnedActor = SpawnActorInMap(SpawnParams[SpawnIndex].ActorClass, SpawnLocation);
 	if (SpawnedActor)
 	{
 		LastPointActorSpawned = SpawnedActor;
@@ -322,4 +323,20 @@ void ADefaultMap::UpdateForcePreventParams()
 	}
 
 	return;
+}
+
+void ADefaultMap::EnqueueAbilitySprite(AAbilityActor * Ability, int32 index)
+{
+	AbilitySprites[index]->SetSprite(Ability->Icon);
+}
+
+void ADefaultMap::DequeueAbilitySprite()
+{
+	int32 i = 0;
+		
+	for (i = 0; i < (AbilitySprites.Num() - 1) && AbilitySprites[i + 1]->GetSprite() != nullptr; i++)
+	{
+		AbilitySprites[i]->SetSprite(AbilitySprites[i + 1]->GetSprite());
+	}
+	AbilitySprites[i]->SetSprite(nullptr);
 }
