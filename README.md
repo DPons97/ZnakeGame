@@ -4,7 +4,7 @@
 ## Commit list
 ---
 
-* First commit: Initalisation, GitLFS and .gitignore settings
+* First commit: Initialisation, GitLFS and .gitignore settings
 * Z01: First commit, gitignore and gitattributes
 * Z02: First tilemap and tilesets. Collision fixed and character created
 * Z03: Character movement and map generation
